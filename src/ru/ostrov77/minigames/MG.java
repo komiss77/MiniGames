@@ -39,7 +39,7 @@ public class MG extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         loadItems();
-        Bukkit.getServer().getPluginManager().registerEvents(new UniversalListener(main), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new MiniGamesLst(main), this);
     }
 
 

@@ -56,14 +56,14 @@ import ru.komiss77.utils.inventory.InventoryProvider;
 import ru.komiss77.utils.inventory.SmartInventory;
 
 
-public class UniversalListener implements Listener {
+public class MiniGamesLst implements Listener {
 
     private static Plugin plugin;
     
    
 
-    public UniversalListener(final Plugin plugin) {
-        UniversalListener.plugin = plugin;
+    public MiniGamesLst(final Plugin plugin) {
+        MiniGamesLst.plugin = plugin;
     }
 
     
