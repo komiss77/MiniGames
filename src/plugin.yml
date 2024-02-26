@@ -1,0 +1,8 @@
+name: MiniGames
+main: ru.ostrov77.minigames.MG
+version: 2.0
+api-version: 1.16
+depend: [Ostrov]
+load: POSTWORLD
+author: komiss77
+
