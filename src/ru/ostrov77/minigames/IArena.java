@@ -14,5 +14,6 @@ public interface IArena {
     
     public String leaveCmd();
     
+    public String forceStartCmd();
     
 }

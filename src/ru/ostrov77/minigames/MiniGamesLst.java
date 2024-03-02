@@ -2,10 +2,7 @@ package ru.ostrov77.minigames;
 
 import java.util.Iterator;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.FireworkEffect;
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
@@ -39,7 +36,6 @@ import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
-import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import ru.komiss77.ApiOstrov;
@@ -113,7 +109,7 @@ public class MiniGamesLst implements Listener {
         if (!wantArena.isEmpty()) {
             final IArena ia = MG.arenas.get(wantArena);
             if (ia!=null) {
-                e.getPlayer().performCommand(ia.joinCmd() + wantArena);
+                e.getPlayer().performCommand(ia.joinCmd());
             }
             //final String want = wantArena;
             //new BukkitRunnable() {
@@ -129,13 +125,13 @@ public class MiniGamesLst implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBsignLocalArenaClick(final BsignLocalArenaClick e) {
-//System.out.println(" ---- BsignLocalArenaClick --- "+e.player.getName()+" "+e.arenaName);
+//Ostrov.log("---- BsignLocalArenaClick --- "+e.player.getName()+" "+e.arenaName);
         //Kitbattle.join(e.player, , 10);
         if (!Timer.has(e.player, "joinCmd")) {
             Timer.add(e.player, "joinCmd", 1);
             final IArena ia = MG.arenas.get(e.arenaName);
             if (ia!=null) {
-                e.player.performCommand(ia.joinCmd() + e.arenaName);
+                e.player.performCommand(ia.joinCmd());
             }
         }
         
@@ -488,13 +484,6 @@ public class MiniGamesLst implements Listener {
         }
     }
 
-    public static void spawnRandomFirework(final Location location) {
-        final Firework firework = (Firework) location.getWorld().spawn(location, (Class) Firework.class);
-        final FireworkMeta fireworkMeta = firework.getFireworkMeta();
-        fireworkMeta.addEffect(FireworkEffect.builder().flicker(ApiOstrov.randBoolean()).withColor(Color.fromBGR(ApiOstrov.randInt(0, 255), ApiOstrov.randInt(0, 255), ApiOstrov.randInt(0, 255))).withFade(Color.fromBGR(ApiOstrov.randInt(0, 255), ApiOstrov.randInt(0, 255), ApiOstrov.randInt(0, 255))).with(FireworkEffect.Type.BALL).trail(ApiOstrov.randBoolean()).build());
-        fireworkMeta.setPower(0);
-        firework.setFireworkMeta(fireworkMeta);
-    }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
     public void PlayerArmorStandManipulateEvent(PlayerArmorStandManipulateEvent e){

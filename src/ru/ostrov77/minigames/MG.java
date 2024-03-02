@@ -24,7 +24,7 @@ public class MG extends JavaPlugin implements Listener {
 
     public static MG main;
     public static CaseInsensitiveMap <IArena> arenas;
-    public static MenuItem mapSelector, exit, music, leaveArena;
+    public static MenuItem mapSelector, exit, music, leaveArena, forceStart;
     
     static {
         arenas = new CaseInsensitiveMap<>();
@@ -171,6 +171,32 @@ public class MG extends JavaPlugin implements Listener {
                 }
             )
             .create();
+
+        final ItemStack is5=new ItemBuilder(Material.DIAMOND)
+            .name("§4Ускорить старт")
+            .build();
+        forceStart = new MenuItemBuilder("forceStart", is5)
+            .slot(6)
+            .giveOnJoin(false)
+            .giveOnRespavn(false)
+            .giveOnWorld_change(false)
+            .anycase(true)
+            .canDrop(false)
+            .canPickup(false)
+            .canMove(false)
+            .interact( e -> {
+                    if (e.getAction()==Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                        for (IArena ia : MG.arenas.values()) {
+                            if (ia.hasPlayer(e.getPlayer())) {
+                                forceStart.remove(e.getPlayer());
+                                e.getPlayer().performCommand(ia.forceStartCmd());
+                            }
+                        }
+                    }
+                }
+            )
+            .create();
+        
     }
  
 
