@@ -55,18 +55,15 @@ import ru.komiss77.utils.inventory.SmartInventory;
 public class MiniGamesLst implements Listener {
 
     private static Plugin plugin;
-    
-   
 
     public MiniGamesLst(final Plugin plugin) {
         MiniGamesLst.plugin = plugin;
     }
-
     
     
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent e) {
-
+//Ostrov.log("CreatureSpawnEvent "+e.getSpawnReason());
         switch (e.getSpawnReason()) {
             case CUSTOM, EGG, SPAWNER_EGG, DEFAULT -> {
                 return;
@@ -82,7 +79,12 @@ public class MiniGamesLst implements Listener {
         }
     }
  
-     
+    //@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+   // public void onSpawn(CreatureSpawnEvent e) {
+//Ostrov.log("CreatureSpawnEvent MONITOR isCancelled?"+e.isCancelled());
+   // }
+    
+    
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDataRecieved(final BungeeDataRecieved e) {
 
@@ -111,18 +113,10 @@ public class MiniGamesLst implements Listener {
             if (ia!=null) {
                 e.getPlayer().performCommand(ia.joinCmd());
             }
-            //final String want = wantArena;
-            //new BukkitRunnable() {
-            //    @Override
-            //    public void run() {
-                    //e.getPlayer().performCommand(joinCommad+want);
-                    //AM.tryJoin(e.getPlayer(), want);
-           //     }
-           // }.runTaskLater(plugin, 10);
         }
-
     }
 
+    
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBsignLocalArenaClick(final BsignLocalArenaClick e) {
 //Ostrov.log("---- BsignLocalArenaClick --- "+e.player.getName()+" "+e.arenaName);
@@ -136,6 +130,272 @@ public class MiniGamesLst implements Listener {
         }
         
     }
+
+
+    @EventHandler
+    public void FriendTeleport(FriendTeleportEvent e) {
+        if (!e.target.getWorld().getName().equals("lobby")) {
+            e.setCanceled(true, "§f" + e.target.getName() + " §eиграет, не будем мешать!");
+        }
+    }
+
+    
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
+    public static void onInteract(PlayerInteractEvent e) {
+        final Player p = e.getPlayer();
+        if (p.getGameMode() == GameMode.SPECTATOR && (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK)) {
+            if (p.getOpenInventory().getType() != InventoryType.CHEST) {
+                SmartInventory.builder()
+                        .type(InventoryType.HOPPER)
+                        .id("spectator")
+                        .provider(new SpectatorMenu())
+                        .title("§fМеню зрителя")
+                        .build()
+                        .open(p);
+            }
+        }
+    }
+    
+    
+    public static void spectatorPrepare(final Player p) {
+        p.closeInventory();
+        p.getInventory().clear();
+        final Iterator<PotionEffect> iterator = p.getActivePotionEffects().iterator();
+        while (iterator.hasNext()) {
+            p.removePotionEffect(iterator.next().getType());
+        }
+        p.setGameMode(GameMode.SPECTATOR);
+        ApiOstrov.sendTitle(p, "§fРежим зрителя", "§a ЛКМ - открыть меню");
+        PM.getOplayer(p).tabSuffix("§8Зритель", p);
+        p.sendMessage("§fРежим зрителя. §aЛевый клик -> открыть меню");
+        p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+    }
+
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR) //стираем наметаг, или не даёт отображать скореб.команды!
+    public void onTeleportChange(final PlayerTeleportEvent e) {
+        if (!e.getFrom().getWorld().getName().equals(e.getTo().getWorld().getName())) {
+            if (e.getFrom().getWorld().getName().equals("lobby")) {
+                //if (PM.nameTagManager!=null) 
+                PM.getOplayer(e.getPlayer()).tag("", "");
+                PM.getOplayer(e.getPlayer()).score.getSideBar().reset();
+            }
+        }
+    }
+
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onPlayerDamage(EntityDamageEvent e) {
+        if (e.getEntityType() != EntityType.PLAYER) {
+            return;
+        }
+        final Player p = (Player) e.getEntity();
+
+        if (p.getWorld().getName().equals("lobby")) {
+            e.setDamage(0);
+            p.setFireTicks(0);
+            if (e.getCause() == EntityDamageEvent.DamageCause.VOID || e.getCause() == EntityDamageEvent.DamageCause.LAVA) {
+                p.setFallDistance(0);
+                //p.setFireTicks(0);
+                //p.teleport(Bukkit.getServer().getWorlds().get(0).getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND); //от PLUGIN блокируются
+                Ostrov.sync(() -> p.teleport(Bukkit.getWorld("lobby").getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND), 0);
+                return;
+            }
+            e.setCancelled(true);
+        }
+
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent e) {
+        if ((e.getEntity().getType() == EntityType.PLAYER) && (e.getDamager() instanceof Firework)) {
+            e.setDamage(0);
+            e.setCancelled(true);
+        }
+    }
+
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onFly(PlayerToggleFlightEvent e) {
+        e.setCancelled(!ApiOstrov.isLocalBuilder(e.getPlayer(), false));
+    }
+    
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onPickup(EntityPickupItemEvent e) {
+        if (e.getEntityType() == EntityType.PLAYER && e.getEntity().getWorld().getName().equals("lobby") 
+                && !ApiOstrov.isLocalBuilder((Player) e.getEntity(), false)) {
+            e.setCancelled(true);
+            e.getItem().remove();
+        }
+    }
+
+    
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onDrop(PlayerDropItemEvent e) {
+        if (e.getPlayer().getWorld().getName().equals("lobby") && !ApiOstrov.isLocalBuilder(e.getPlayer(), false)) {
+            e.setCancelled(true);
+            e.getItemDrop().remove();
+        }
+    }
+
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onPlace(BlockPlaceEvent e) {
+        //PM.getOplayer(e.getPlayer().getName()).last_breack=Timer.Единое_время();
+        if (!ApiOstrov.isLocalBuilder(e.getPlayer(), false) && e.getPlayer().getWorld().getName().equals("lobby")) {
+            e.setCancelled(true);
+        }
+    }
+
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onBreak(BlockBreakEvent e) {
+        if (!ApiOstrov.isLocalBuilder(e.getPlayer(), false) && e.getPlayer().getWorld().getName().equals("lobby")) {
+            e.setCancelled(true);
+        }
+    }
+
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void PlayerArmorStandManipulateEvent(PlayerArmorStandManipulateEvent e){
+        if (!e.getPlayer().isOp()) e.setCancelled(true);
+    }    
+   
+
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onHungerChange(FoodLevelChangeEvent e) {
+        e.setCancelled(true);
+        ((Player)e.getEntity()).setFoodLevel(20);
+    }
+        
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onPlayerDeath(PlayerDeathEvent pde) {
+       final Player p = pde.getEntity(); 
+       p.teleport (Bukkit.getWorlds().get(0).getSpawnLocation());
+    }   
+   
+     
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onPlayerSwapoffHand(PlayerSwapHandItemsEvent e) {
+        if (e.getPlayer().getWorld().getName().equals("lobby")) {
+            e.setCancelled(true);
+        }
+    }    
+  
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void strucGrow(StructureGrowEvent e) {
+          e.setCancelled(true);
+    }    
+    
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onWeatherChange(WeatherChangeEvent e) {
+        boolean rain = e.toWeatherState();
+        if(rain) e.setCancelled(true);
+    }
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onForm(BlockFormEvent form) {
+        form.setCancelled(true);
+    }
+	
+ 
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onThunderChange(ThunderChangeEvent event) {
+        boolean storm = event.toThunderState();
+        if(storm) event.setCancelled(true);
+    } 
+
+   
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onBlockSpread(BlockSpreadEvent e) {
+        e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onBlockGrowth(BlockGrowEvent e) {
+        e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void BlockFadeEvent(BlockFadeEvent e) {
+        e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void BlockFromToEvent(BlockFromToEvent e) {
+        e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void FluidLevelChangeEvent(FluidLevelChangeEvent e) {
+        e.setCancelled(true);
+    }
+
+    
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onBlockFade(BlockFadeEvent event) {
+        if (event.getBlock().getType() == Material.ICE || event.getBlock().getType() == Material.PACKED_ICE || event.getBlock().getType() == Material.SNOW || event.getBlock().getType() == Material.SNOW_BLOCK) {
+            event.setCancelled(true);
+        }
+    }    
+    
+    
+    
+    public static class SpectatorMenu implements InventoryProvider {
+
+        @Override
+        public void init(final Player p, final InventoryContent contents) {
+            p.playSound(p.getLocation(), Sound.BLOCK_COMPARATOR_CLICK, .5f, 1);
+
+          /*  contents.set(0, ClickableItem.of(mapSelector, e -> {
+                if (e.isLeftClick()) {
+                    //p.closeInventory();
+                    if (p.getGameMode() == GameMode.SPECTATOR) {
+                        //
+                    } else {
+                        p.closeInventory();
+                    }
+                }
+            }));*/
+
+           /* contents.set(2, ClickableItem.of(music, e -> {
+                if (e.isLeftClick()) {
+                    if (p.getGameMode() == GameMode.SPECTATOR) {
+                        //Bukkit.getServer().dispatchCommand(p, "music");   
+                    } else {
+                        p.closeInventory();
+                    }
+                }
+            }));*/
+
+            contents.set(4, ClickableItem.of(MG.leaveArena.getItem(), e -> {
+                if (e.isLeftClick()) {
+                    p.closeInventory();
+                    if (p.getGameMode() == GameMode.SPECTATOR) {
+                        MG.lobbyJoin(p);
+                    } else {
+                        p.closeInventory();
+                    }
+                }
+            }));
+
+        }
+    }
+
+    
+    
+    
+    
+}
+
+
+
 
   /*  @EventHandler(priority = EventPriority.MONITOR)
     public static void SignUpdateEvent(GameInfoUpdateEvent e) {
@@ -169,36 +429,59 @@ public class MiniGamesLst implements Listener {
         }
     }*/
 
-//    @EventHandler(priority = EventPriority.MONITOR)
- //   public void onPlayerLeave(final PlayerQuitEvent e) {
- //       AM.GlobalPlayerExit(e.getPlayer());
- //   }
-   
-    @EventHandler
-    public void FriendTeleport(FriendTeleportEvent e) {
-        if (!e.target.getWorld().getName().equals("lobby")) {
-            e.setCanceled(true, "§f" + e.target.getName() + " §eиграет, не будем мешать!");
+    
+
+
+
+    /*     
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onWorldChange (final PlayerChangedWorldEvent e) {
+//System.out.println("PlayerChangedWorldEvent from="+e.getFrom().getName());
+        //final Player p = e.getPlayer();
+        new BukkitRunnable() {
+            final Player p = e.getPlayer();
+            @Override
+            public void run() {
+                switchLocalGlobal(p, true);
+                perWorldTabList(e.getPlayer());
+            }
+        }.runTaskLater(plugin, 1);
+    }
+        
+        
+        
+    
+    public static void perWorldTabList(final Player player) {
+        for (Player other:Bukkit.getOnlinePlayers()) {
+            if (player.getWorld().getName().equals(other.getWorld().getName())) {
+                player.showPlayer(plugin, other);
+                other.showPlayer(plugin, player);
+            } else {
+                player.hidePlayer(plugin, other);
+                other.hidePlayer(plugin, player);
+            }
+        }
+
+    }
+    
+    public static void switchLocalGlobal(final Player p, final boolean notify) {
+        final Oplayer op = PM.getOplayer(p);
+        if (p.getWorld().getName().equalsIgnoreCase("lobby")) { //оказались в лобби, делаем глобальный
+            if ( op.isLocalChat()){
+                if (notify) p.sendMessage("§8Чат переключен на Общий");
+                op.setLocalChat(false);//Ostrov.deluxechatPlugin.setGlobal(p.getUniqueId().toString());
+            }
+        } else {
+            if ( !op.isLocalChat() )  {
+                if (notify) p.sendMessage("§8Чат переключен на Арену");
+                op.setLocalChat(true);//Ostrov.deluxechatPlugin.setLocal(p.getUniqueId().toString());
+            }
         }
     }
-
     
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
-    public static void onInteract(PlayerInteractEvent e) {
+     */
 
-        final Player p = e.getPlayer();
 
-        if (p.getGameMode() == GameMode.SPECTATOR && (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK)) {
-            if (p.getOpenInventory().getType() != InventoryType.CHEST) {
-                SmartInventory.builder()
-                        .type(InventoryType.HOPPER)
-                        .id("spectator")
-                        .provider(new SpectatorMenu())
-                        .title("§fМеню зрителя")
-                        .build()
-                        .open(p);
-            }
-           // return;
-        }
 
       //  if (e.getAction() == Action.PHYSICAL || e.getItem() == null) {
        //     return;
@@ -216,7 +499,7 @@ public class MiniGamesLst implements Listener {
        // } else if (ItemUtils.compareItem(e.getItem(), mapSelector, false)) {
          //   e.setCancelled(true);
         //    openArenaSelectMenu(e.getPlayer());
-        }/* else if (ItemUtils.compareItem(e.getItem(), music, false)) {
+        /* else if (ItemUtils.compareItem(e.getItem(), music, false)) {
             e.setCancelled(true);
             e.getPlayer().playSound(e.getPlayer().getLocation(), Sound.BLOCK_COMPARATOR_CLICK, 0.5F, 1);
             if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {
@@ -330,296 +613,3 @@ public class MiniGamesLst implements Listener {
         //plugin.arenaSelector.open(p);
     }
 */
-    public static void spectatorPrepare(final Player p) {
-        p.closeInventory();
-        p.getInventory().clear();
-        final Iterator<PotionEffect> iterator = p.getActivePotionEffects().iterator();
-        while (iterator.hasNext()) {
-            p.removePotionEffect(iterator.next().getType());
-        }
-        p.setGameMode(GameMode.SPECTATOR);
-        ApiOstrov.sendTitle(p, "§fРежим зрителя", "§a ЛКМ - открыть меню");
-        PM.getOplayer(p).tabSuffix("§8Зритель", p);
-        p.sendMessage("§fРежим зрителя. §aЛевый клик -> открыть меню");
-        p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR) //стираем наметаг, или не даёт отображать скореб.команды!
-    public void onTeleportChange(final PlayerTeleportEvent e) {
-        if (!e.getFrom().getWorld().getName().equals(e.getTo().getWorld().getName())) {
-            if (e.getFrom().getWorld().getName().equals("lobby")) {
-                //if (PM.nameTagManager!=null) 
-                PM.getOplayer(e.getPlayer()).tag("", "");
-                PM.getOplayer(e.getPlayer()).score.getSideBar().reset();
-            }
-        }
-    }
-
-    /*     
-    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onWorldChange (final PlayerChangedWorldEvent e) {
-//System.out.println("PlayerChangedWorldEvent from="+e.getFrom().getName());
-        //final Player p = e.getPlayer();
-        new BukkitRunnable() {
-            final Player p = e.getPlayer();
-            @Override
-            public void run() {
-                switchLocalGlobal(p, true);
-                perWorldTabList(e.getPlayer());
-            }
-        }.runTaskLater(plugin, 1);
-    }
-        
-        
-        
-    
-    public static void perWorldTabList(final Player player) {
-        for (Player other:Bukkit.getOnlinePlayers()) {
-            if (player.getWorld().getName().equals(other.getWorld().getName())) {
-                player.showPlayer(plugin, other);
-                other.showPlayer(plugin, player);
-            } else {
-                player.hidePlayer(plugin, other);
-                other.hidePlayer(plugin, player);
-            }
-        }
-
-    }
-    
-    public static void switchLocalGlobal(final Player p, final boolean notify) {
-        final Oplayer op = PM.getOplayer(p);
-        if (p.getWorld().getName().equalsIgnoreCase("lobby")) { //оказались в лобби, делаем глобальный
-            if ( op.isLocalChat()){
-                if (notify) p.sendMessage("§8Чат переключен на Общий");
-                op.setLocalChat(false);//Ostrov.deluxechatPlugin.setGlobal(p.getUniqueId().toString());
-            }
-        } else {
-            if ( !op.isLocalChat() )  {
-                if (notify) p.sendMessage("§8Чат переключен на Арену");
-                op.setLocalChat(true);//Ostrov.deluxechatPlugin.setLocal(p.getUniqueId().toString());
-            }
-        }
-    }
-    
-     */
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onPlayerDamage(EntityDamageEvent e) {
-
-        if (e.getEntityType() != EntityType.PLAYER) {
-            return;
-        }
-
-        final Player p = (Player) e.getEntity();
-
-        if (p.getWorld().getName().equals("lobby")) {
-            e.setDamage(0);
-            p.setFireTicks(0);
-            if (e.getCause() == EntityDamageEvent.DamageCause.VOID || e.getCause() == EntityDamageEvent.DamageCause.LAVA) {
-                p.setFallDistance(0);
-                //p.setFireTicks(0);
-                //p.teleport(Bukkit.getServer().getWorlds().get(0).getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND); //от PLUGIN блокируются
-                Ostrov.sync(() -> p.teleport(Bukkit.getWorld("lobby").getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND), 0);
-                return;
-            }
-            e.setCancelled(true);
-        }
-
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent e) {
-        if ((e.getEntity().getType() == EntityType.PLAYER) && (e.getDamager() instanceof Firework)) {
-            e.setDamage(0);
-            e.setCancelled(true);
-        }
-    }
-
-    // @EventHandler
-    //  public void onPlayerSwapoffHand(PlayerSwapHandItemsEvent e) {
-    //      if (e.getPlayer().getWorld().getName().equals("lobby") ) e.setCancelled(true);
-    //  }
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-    public void onFly(PlayerToggleFlightEvent e) {
-        e.setCancelled(!ApiOstrov.isLocalBuilder(e.getPlayer(), false));
-    }
-
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-    public void onPickup(EntityPickupItemEvent e) {
-//System.out.println("PlayerPickupItemEvent "+e.getItem());        
-        if (e.getEntityType() == EntityType.PLAYER && e.getEntity().getWorld().getName().equals("lobby") && !ApiOstrov.isLocalBuilder((Player) e.getEntity(), false)) {
-            e.setCancelled(true);
-            e.getItem().remove();
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-    public void onDrop(PlayerDropItemEvent e) {
-      //  final ItemStack item = e.getItemDrop().getItemStack();
-     /*   if (ItemUtils.compareItem(item, mapSelector, false)
-                || ItemUtils.compareItem(item, leaveArena, false)
-                || ItemUtils.compareItem(item, exit, false)
-                || ItemUtils.compareItem(item, music, false)) {
-            e.setCancelled(true);
-            e.getItemDrop().remove();
-        }*/
-
-        if (e.getPlayer().getWorld().getName().equals("lobby") && !ApiOstrov.isLocalBuilder(e.getPlayer(), false)) {
-            e.setCancelled(true);
-            e.getItemDrop().remove();
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onPlace(BlockPlaceEvent e) {
-        //PM.getOplayer(e.getPlayer().getName()).last_breack=Timer.Единое_время();
-        if (!ApiOstrov.isLocalBuilder(e.getPlayer(), false) && e.getPlayer().getWorld().getName().equals("lobby")) {
-            e.setCancelled(true);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onBreak(BlockBreakEvent e) {
-        if (!ApiOstrov.isLocalBuilder(e.getPlayer(), false) && e.getPlayer().getWorld().getName().equals("lobby")) {
-            e.setCancelled(true);
-        }
-    }
-
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void PlayerArmorStandManipulateEvent(PlayerArmorStandManipulateEvent e){
-        if (!e.getPlayer().isOp()) e.setCancelled(true);
-    }    
-   
-
-    
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onHungerChange(FoodLevelChangeEvent e) {
-        e.setCancelled(true);
-        ((Player)e.getEntity()).setFoodLevel(20);
-    }
-        
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onPlayerDeath(PlayerDeathEvent pde) {
-       final Player p = pde.getEntity(); 
-       p.teleport (Bukkit.getWorlds().get(0).getSpawnLocation());
-    }   
-   
-     
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onPlayerSwapoffHand(PlayerSwapHandItemsEvent e) {
-        if (e.getPlayer().getWorld().getName().equals("lobby")) {
-            e.setCancelled(true);
-        }
-    }    
-  
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void strucGrow(StructureGrowEvent e) {
-          e.setCancelled(true);
-    }    
-    
-    
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onWeatherChange(WeatherChangeEvent e) {
-        boolean rain = e.toWeatherState();
-        if(rain) e.setCancelled(true);
-    }
-    
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onForm(BlockFormEvent form) {
-        form.setCancelled(true);
-    }
-	
- 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onThunderChange(ThunderChangeEvent event) {
-        boolean storm = event.toThunderState();
-        if(storm) event.setCancelled(true);
-    } 
-
-   
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onBlockSpread(BlockSpreadEvent e) {
-        e.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onBlockGrowth(BlockGrowEvent e) {
-        e.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void BlockFadeEvent(BlockFadeEvent e) {
-        e.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void BlockFromToEvent(BlockFromToEvent e) {
-        e.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void FluidLevelChangeEvent(FluidLevelChangeEvent e) {
-        e.setCancelled(true);
-    }
-
-    
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onBlockFade(BlockFadeEvent event) {
-        if (event.getBlock().getType() == Material.ICE || event.getBlock().getType() == Material.PACKED_ICE || event.getBlock().getType() == Material.SNOW || event.getBlock().getType() == Material.SNOW_BLOCK) {
-            event.setCancelled(true);
-        }
-    }    
-    
-    
-    
-    public static class SpectatorMenu implements InventoryProvider {
-
-        public SpectatorMenu() {
-        }
-
-        @Override
-        public void init(final Player p, final InventoryContent contents) {
-            //p.playSound(p.getLocation(), Sound.BLOCK_COMPARATOR_CLICK, 5, 5);
-            //contents.fillRect(0,0, 2,3, ClickableItem.empty(fill1));
-            p.playSound(p.getLocation(), Sound.BLOCK_COMPARATOR_CLICK, .5f, 1);
-
-          /*  contents.set(0, ClickableItem.of(mapSelector, e -> {
-                if (e.isLeftClick()) {
-                    //p.closeInventory();
-                    if (p.getGameMode() == GameMode.SPECTATOR) {
-                        //
-                    } else {
-                        p.closeInventory();
-                    }
-                }
-            }));*/
-
-           /* contents.set(2, ClickableItem.of(music, e -> {
-                if (e.isLeftClick()) {
-                    if (p.getGameMode() == GameMode.SPECTATOR) {
-                        //Bukkit.getServer().dispatchCommand(p, "music");   
-                    } else {
-                        p.closeInventory();
-                    }
-                }
-            }));*/
-
-            contents.set(4, ClickableItem.of(MG.leaveArena.getItem(), e -> {
-                if (e.isLeftClick()) {
-                    p.closeInventory();
-                    if (p.getGameMode() == GameMode.SPECTATOR) {
-                        MG.lobbyJoin(p);
-                    } else {
-                        p.closeInventory();
-                    }
-                }
-            }));
-
-        }
-
-    }
-
-}

@@ -1,5 +1,6 @@
 package ru.ostrov77.minigames;
 
+import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -10,6 +11,13 @@ import org.bukkit.event.block.Action;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.komiss77.ApiOstrov;
+import ru.komiss77.Ostrov;
+import ru.komiss77.Timer;
+import ru.komiss77.enums.Game;
+import ru.komiss77.enums.GameState;
+import ru.komiss77.modules.games.ArenaInfo;
+import ru.komiss77.modules.games.GM;
+import ru.komiss77.modules.games.GameInfo;
 import ru.komiss77.modules.menuItem.MenuItem;
 import ru.komiss77.modules.menuItem.MenuItemBuilder;
 import ru.komiss77.modules.player.Oplayer;
@@ -40,6 +48,7 @@ public class MG extends JavaPlugin implements Listener {
     public void onEnable() {
         loadItems();
         Bukkit.getServer().getPluginManager().registerEvents(new MiniGamesLst(main), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new ChatLst(), this);
     }
 
 
@@ -81,8 +90,14 @@ public class MG extends JavaPlugin implements Listener {
         op.score.getSideBar().title("§7Лобби");
     }
 
- 
-    
+    public static IArena getArena (final Player p) {
+        for (IArena ia : arenas.values()) {
+            if (ia.hasPlayer(p)) {
+                return ia;
+            }
+        }
+        return null;
+    }
 
     public static void log_ok(String s) {   Bukkit.getConsoleSender().sendMessage("§fMG: §2"+ s); }
     public static void log_err(String s) {   Bukkit.getConsoleSender().sendMessage("§fMG: §c"+ s); }
