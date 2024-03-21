@@ -1,6 +1,6 @@
 package ru.ostrov77.minigames;
 
-import javax.annotation.Nullable;
+import ru.ostrov77.minigames.event.OpenMapSelectorEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -11,13 +11,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.komiss77.ApiOstrov;
-import ru.komiss77.Ostrov;
-import ru.komiss77.Timer;
-import ru.komiss77.enums.Game;
-import ru.komiss77.enums.GameState;
-import ru.komiss77.modules.games.ArenaInfo;
-import ru.komiss77.modules.games.GM;
-import ru.komiss77.modules.games.GameInfo;
 import ru.komiss77.modules.menuItem.MenuItem;
 import ru.komiss77.modules.menuItem.MenuItemBuilder;
 import ru.komiss77.modules.player.Oplayer;
@@ -25,6 +18,7 @@ import ru.komiss77.modules.player.PM;
 import ru.komiss77.modules.player.profile.Section;
 import ru.komiss77.objects.CaseInsensitiveMap;
 import ru.komiss77.utils.ItemBuilder;
+import ru.ostrov77.minigames.event.LobbyJoinEvent;
 
 
 
@@ -88,6 +82,7 @@ public class MG extends JavaPlugin implements Listener {
         op.tabSuffix(": §8Не выбрана", p);
         op.score.getSideBar().reset();
         op.score.getSideBar().title("§7Лобби");
+        Bukkit.getPluginManager().callEvent(new LobbyJoinEvent(p));
     }
 
     public static IArena getArena (final Player p) {
@@ -119,7 +114,11 @@ public class MG extends JavaPlugin implements Listener {
             .canMove(false)
             .interact( e -> {
                     if (e.getAction()==Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                        PM.getOplayer(e.getPlayer()).menu.open(e.getPlayer(), Section.МИНИИГРЫ);
+                        final OpenMapSelectorEvent ev = new OpenMapSelectorEvent(e.getPlayer());
+                        Bukkit.getPluginManager().callEvent(ev);
+                        if (!ev.canceled) {
+                            PM.getOplayer(e.getPlayer()).menu.open(e.getPlayer(), Section.МИНИИГРЫ);
+                        }
                     }
                 }
             )

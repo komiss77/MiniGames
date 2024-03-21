@@ -50,6 +50,7 @@ import ru.komiss77.utils.inventory.ClickableItem;
 import ru.komiss77.utils.inventory.InventoryContent;
 import ru.komiss77.utils.inventory.InventoryProvider;
 import ru.komiss77.utils.inventory.SmartInventory;
+import ru.ostrov77.minigames.event.SpectatorMenuEvent;
 
 
 public class MiniGamesLst implements Listener {
@@ -353,6 +354,7 @@ public class MiniGamesLst implements Listener {
         public void init(final Player p, final InventoryContent contents) {
             p.playSound(p.getLocation(), Sound.BLOCK_COMPARATOR_CLICK, .5f, 1);
 
+            Bukkit.getPluginManager().callEvent(new SpectatorMenuEvent(p, contents));
           /*  contents.set(0, ClickableItem.of(mapSelector, e -> {
                 if (e.isLeftClick()) {
                     //p.closeInventory();
