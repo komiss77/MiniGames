@@ -202,7 +202,7 @@ public class MG extends JavaPlugin implements Listener {
                     if (e.getAction()==Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
                         for (IArena ia : MG.arenas.values()) {
                             if (ia.hasPlayer(e.getPlayer())) {
-                                forceStart.remove(e.getPlayer());
+                                //forceStart.remove(e.getPlayer());
                                 e.getPlayer().performCommand(ia.forceStartCmd());
                             }
                         }

@@ -185,7 +185,7 @@ public class MiniGamesLst implements Listener {
     }
 
     
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPlayerDamage(EntityDamageEvent e) {
         if (e.getEntityType() != EntityType.PLAYER) {
             return;
@@ -200,9 +200,10 @@ public class MiniGamesLst implements Listener {
                 //p.setFireTicks(0);
                 //p.teleport(Bukkit.getServer().getWorlds().get(0).getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND); //от PLUGIN блокируются
                 Ostrov.sync(() -> p.teleport(Bukkit.getWorld("lobby").getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND), 0);
-                return;
+                //return;
+            } else {
+                e.setCancelled(true);
             }
-            e.setCancelled(true);
         }
 
     }
