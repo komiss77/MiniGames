@@ -105,11 +105,12 @@ public class MG extends JavaPlugin implements Listener {
             .build();
         mapSelector = new MenuItemBuilder("mapSelector", is1)
             .slot(0)
-            .giveOnJoin(true)
+            .giveOnJoin(false)
             .giveOnRespavn(false)
             .giveOnWorld_change(false)
             .anycase(true)
             .canDrop(false)
+            .duplicate(false)
             .canPickup(false)
             .canMove(false)
             .interact( e -> {
@@ -129,11 +130,12 @@ public class MG extends JavaPlugin implements Listener {
             .build();
         exit = new MenuItemBuilder("exit", is2)
             .slot(7)
-            .giveOnJoin(true)
+            .giveOnJoin(false)
             .giveOnRespavn(false)
             .giveOnWorld_change(false)
             .anycase(true)
             .canDrop(false)
+            .duplicate(false)
             .canPickup(false)
             .canMove(false)
             .interact( e -> {
@@ -151,13 +153,14 @@ public class MG extends JavaPlugin implements Listener {
             .build();
         music = new MenuItemBuilder("music", is3)
             .slot(4)
-            .giveOnJoin(true)
+            .giveOnJoin(false)
             .giveOnRespavn(false)
             .giveOnWorld_change(false)
             .anycase(true)
             .canDrop(false)
             .canPickup(false)
             .canMove(false)
+            .duplicate(false)
             .leftClickCmd("music switch")
             .rightClickCmd("music")
             .create();
@@ -167,13 +170,14 @@ public class MG extends JavaPlugin implements Listener {
             .build();
         leaveArena = new MenuItemBuilder("leaveArena", is4)
             .slot(8)
-            .giveOnJoin(true)
+            .giveOnJoin(false)
             .giveOnRespavn(false)
             .giveOnWorld_change(false)
             .anycase(true)
             .canDrop(false)
             .canPickup(false)
             .canMove(false)
+            .duplicate(false)
             .interact( e -> {
                     if (e.getAction()==Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
                         for (IArena ia : MG.arenas.values()) {
@@ -197,6 +201,7 @@ public class MG extends JavaPlugin implements Listener {
             .anycase(true)
             .canDrop(false)
             .canPickup(false)
+            .duplicate(false)
             .canMove(false)
             .interact( e -> {
                     if (e.getAction()==Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {

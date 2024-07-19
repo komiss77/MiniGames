@@ -43,8 +43,8 @@ import ru.komiss77.Ostrov;
 import ru.komiss77.Timer;
 import ru.komiss77.enums.Data;
 import ru.komiss77.events.BsignLocalArenaClick;
-import ru.komiss77.events.BungeeDataRecieved;
 import ru.komiss77.events.FriendTeleportEvent;
+import ru.komiss77.events.LocalDataLoadEvent;
 import ru.komiss77.modules.player.PM;
 import ru.komiss77.utils.inventory.ClickableItem;
 import ru.komiss77.utils.inventory.InventoryContent;
@@ -87,7 +87,7 @@ public class MiniGamesLst implements Listener {
     
     
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onDataRecieved(final BungeeDataRecieved e) {
+    public void onLocalDataLoadEvent(final LocalDataLoadEvent e) {
 
         //AM.onDataRecieved(e.getPlayer());    //load
         MG.lobbyJoin(e.getPlayer());
