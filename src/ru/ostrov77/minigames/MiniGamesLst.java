@@ -46,6 +46,7 @@ import ru.komiss77.events.BsignLocalArenaClick;
 import ru.komiss77.events.FriendTeleportEvent;
 import ru.komiss77.events.LocalDataLoadEvent;
 import ru.komiss77.modules.player.PM;
+import ru.komiss77.utils.ScreenUtil;
 import ru.komiss77.utils.inventory.ClickableItem;
 import ru.komiss77.utils.inventory.InventoryContent;
 import ru.komiss77.utils.inventory.InventoryProvider;
@@ -166,7 +167,7 @@ public class MiniGamesLst implements Listener {
             p.removePotionEffect(iterator.next().getType());
         }
         p.setGameMode(GameMode.SPECTATOR);
-        ApiOstrov.sendTitle(p, "§fРежим зрителя", "§a ЛКМ - открыть меню");
+        ScreenUtil.sendTitle(p, "§fРежим зрителя", "§a ЛКМ - открыть меню");
         PM.getOplayer(p).tabSuffix("§8Зритель", p);
         p.sendMessage("§fРежим зрителя. §aЛевый клик -> открыть меню");
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);

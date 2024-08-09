@@ -9,7 +9,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import ru.komiss77.enums.GameState;
 import ru.komiss77.events.ChatPrepareEvent;
-import ru.komiss77.utils.TCUtils;
+import ru.komiss77.utils.TCUtil;
 
 
 class ChatLst implements Listener  {
@@ -31,15 +31,15 @@ class ChatLst implements Listener  {
         
         if (ia == null) {
             
-            c = TCUtils.format("§8<игра?> §7")
-                    .hoverEvent(HoverEvent.showText(TCUtils.format("§bМиниигры \n§7Игра не выбрана")))
+            c = TCUtil.form("§8<игра?> §7")
+                    .hoverEvent(HoverEvent.showText(TCUtil.form("§bМиниигры \n§7Игра не выбрана")))
                 ;
             
 
         } else {
             
-            c = TCUtils.format( ("<"+ia.name())+"> §7" )
-                    .hoverEvent(HoverEvent.showText(TCUtils.format("§bМиниигры \n§7Игра : §e"+ia.name())))
+            c = TCUtil.form( ("<"+ia.name())+"> §7" )
+                    .hoverEvent(HoverEvent.showText(TCUtil.form("§bМиниигры \n§7Игра : §e"+ia.name())))
                     ;
             
             if (ia.state() == GameState.ИГРА) {

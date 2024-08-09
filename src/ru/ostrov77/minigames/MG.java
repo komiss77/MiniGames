@@ -148,8 +148,8 @@ public class MG extends JavaPlugin implements Listener {
 
         final ItemStack is3=new ItemBuilder(Material.NOTE_BLOCK)
             .name("§4Музыка")
-            .addLore("§eЛКМ §7- §aвкл§7/§4выкл")
-            .addLore("§eПКМ §7- меню")
+            .lore("§eЛКМ §7- §aвкл§7/§4выкл")
+            .lore("§eПКМ §7- меню")
             .build();
         music = new MenuItemBuilder("music", is3)
             .slot(4)
